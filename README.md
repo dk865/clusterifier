@@ -14,5 +14,6 @@ By dk865
 
 
 Todo:
+- DON'T PROCESS FILES WITHOUT LIGHTS! (INSTANCES)
 - Export a file containing the name of each light replaced?
 - Allow direct decompiling of a `BSP`, modifying, then recompiling?
