@@ -119,8 +119,8 @@ def run_clusterify():
         if not folder:
             messagebox.showwarning("No folder selected", "Please select a batch folder first.")
             return
-        filepaths = get_all_vmf_files(folder)
-        if not filepaths:
+        all_filepaths = get_all_vmf_files(folder)
+        if not all_filepaths:
             messagebox.showwarning("No VMF files found", "No .vmf files found in the selected folder.")
             return
     else:
@@ -128,27 +128,12 @@ def run_clusterify():
         if not filepath:
             messagebox.showwarning("No file selected", "Please select a VMF file first.")
             return
-        filepaths = [filepath]
+        all_filepaths = [filepath]
 
     try:
-        if backup_var.get():
-            backup_path = backup_entry_var.get()
-            if not backup_path:
-                messagebox.showwarning("No backup path", "Please specify a backup file location.")
-                return
+        modified_files = []
+        lights_modified_per_file = {}
 
-            if is_batch:
-                with zipfile.ZipFile(backup_path, 'w') as zipf:
-                    for f in filepaths:
-                        bak = f + ".bak"
-                        shutil.copyfile(f, bak)
-                        arcname = os.path.relpath(f, folder)
-                        zipf.write(bak, arcname)
-                        os.remove(bak)
-            else:
-                shutil.copyfile(filepaths[0], backup_path)
-
-        total_lights = 0
         mode_map = {
             "Static": "0",
             "Specular": "1",
@@ -158,7 +143,7 @@ def run_clusterify():
         selected_mode = mode_var.get()
         mode_num = mode_map.get(selected_mode, "0")
 
-        for filepath in filepaths:
+        for filepath in all_filepaths:
             with open(filepath, "r") as file:
                 lines = file.readlines()
 
@@ -201,18 +186,41 @@ def run_clusterify():
                     continue
                 modified_lines.append(line)
 
-            with open(filepath, "w") as file:
-                file.writelines(modified_lines)
+            if lightmode_count > 0:
+                with open(filepath, "w") as file:
+                    file.writelines(modified_lines)
+                modified_files.append(filepath)
+                lights_modified_per_file[filepath] = lightmode_count
 
-            total_lights += lightmode_count
+        if backup_var.get() and modified_files:
+            backup_path = backup_entry_var.get()
+            if not backup_path:
+                messagebox.showwarning("No backup path", "Please specify a backup file location.")
+                return
 
-        msg = f"{len(filepaths)} file(s) updated.\nTotal lights modified: {total_lights}."
-        if backup_var.get():
+            if is_batch:
+                with zipfile.ZipFile(backup_path, 'w') as zipf:
+                    for f in modified_files:
+                        bak = f + ".bak"
+                        shutil.copyfile(f, bak)
+                        arcname = os.path.relpath(f, folder)
+                        zipf.write(bak, arcname)
+                        os.remove(bak)
+            else:
+                shutil.copyfile(modified_files[0], backup_path)
+
+        total_lights = sum(lights_modified_per_file.values())
+        msg = f"{len(modified_files)} file(s) updated.\nTotal lights modified: {total_lights}."
+        if backup_var.get() and modified_files:
             msg += f"\nBackup saved as '{os.path.basename(backup_entry_var.get())}'."
+        elif backup_var.get() and not modified_files:
+            msg += "\nNo files were modified, so no backup was created."
+
         messagebox.showinfo("Success", msg)
 
     except Exception as e:
         messagebox.showerror("Error", str(e))
+
 
 def open_github(event=None):
     webbrowser.open("https://github.com/dk865/clusterifier")

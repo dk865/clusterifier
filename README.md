@@ -10,10 +10,8 @@ By dk865
 - Lastly, it saves the file and shows a message box.
 
 >[!WARNING]
->This can completely ruin your map, or corrupt it. Please select the backup option!
+>If you manually tweaked your map in a text editor, this can corrupt it (in semi-rare cases). Please make a backup!
 
 
 Todo:
-- DON'T PROCESS FILES WITHOUT LIGHTS! (INSTANCES)
-- Export a file containing the name of each light replaced?
 - Allow direct decompiling of a `BSP`, modifying, then recompiling?
