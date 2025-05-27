@@ -12,9 +12,11 @@ def pick_file():
     file_var.set(filepath)
     backup_entry_var.set("")
     mode_dropdown.config(state="readonly")
-    backup_check.config(state="normal")
-    convert_check.config(state="normal")
+    convert_radio1.config(state="normal")
+    convert_radio2.config(state="normal")
+    convert_radio3.config(state="normal")
     clusterify_btn.config(state="normal")
+    backup_check.config(state="normal")
     backup_entry.config(state="disabled")
     save_backup_btn.config(state="disabled")
     backup_var.set(False)
@@ -24,10 +26,12 @@ def pick_folder():
     if folder:
         batch_dir_var.set(folder)
         mode_dropdown.config(state="readonly")
+        convert_radio1.config(state="normal")
+        convert_radio2.config(state="normal")
+        convert_radio3.config(state="normal")
+        clusterify_btn.config(state="normal")
         backup_check.config(state="normal")
         backup_var.set(False)
-        convert_check.config(state="normal")
-        clusterify_btn.config(state="normal")
         backup_entry_var.set("")
         backup_entry.config(state="disabled")
         save_backup_btn.config(state="disabled")
@@ -39,8 +43,14 @@ def update_backup_controls():
 
     if is_single_mode:
         backup_check.config(state="normal")
+        convert_radio1.config(state="normal")
+        convert_radio2.config(state="normal")
+        convert_radio3.config(state="normal")
     elif is_batch_mode:
         backup_check.config(state="normal")
+        convert_radio1.config(state="normal")
+        convert_radio2.config(state="normal")
+        convert_radio3.config(state="normal")
     else:
         backup_check.config(state="disabled")
         backup_var.set(False)
@@ -142,6 +152,7 @@ def run_clusterify():
         }
         selected_mode = mode_var.get()
         mode_num = mode_map.get(selected_mode, "0")
+        convert_mode = convert_var.get()
 
         for filepath in all_filepaths:
             with open(filepath, "r") as file:
@@ -167,16 +178,22 @@ def run_clusterify():
 
                         if class_index is not None and lightmode_index is not None:
                             classname = current_entity[class_index]
-                            if convert_var.get():
+
+                            if convert_mode == 1:
                                 if '"classname" "light"' in classname:
                                     current_entity[class_index] = '\t\t"classname" "light_rt"\n'
                                 elif '"classname" "light_spot"' in classname:
                                     current_entity[class_index] = '\t\t"classname" "light_rt_spot"\n'
+                            elif convert_mode == 2:
+                                if '"classname" "light_rt"' in classname:
+                                    current_entity[class_index] = '\t\t"classname" "light"\n'
+                                elif '"classname" "light_rt_spot"' in classname:
+                                    current_entity[class_index] = '\t\t"classname" "light_spot"\n'
 
                             current_entity.insert(lightmode_index + 1, f'\t\t"_lightmode" "{mode_num}"\n')
                             lightmode_count += 1
 
-                            if convert_var.get() and ('"light_rt"' in current_entity[class_index] or '"light_rt_spot"' in current_entity[class_index]):
+                            if convert_mode == 1 and ('"light_rt"' in current_entity[class_index] or '"light_rt_spot"' in current_entity[class_index]):
                                 if not any('_rt_radius' in l for l in current_entity):
                                     current_entity.insert(-2, '\t\t"_rt_radius" "256"\n')
                                 if not any('_rt_fifty_percent_scale' in l for l in current_entity):
@@ -221,7 +238,6 @@ def run_clusterify():
     except Exception as e:
         messagebox.showerror("Error", str(e))
 
-
 def open_github(event=None):
     webbrowser.open("https://github.com/dk865/clusterifier")
 
@@ -248,10 +264,15 @@ def show_help():
     messagebox.showinfo("Light Mode Help", help_text)
 
 def show_convert_help():
-    messagebox.showinfo("Convert to light_rt Help",
-        " - light_rt and light_rt_spot are new entities included with the Portal 2 Community Edition clustered beta.\n"
-        " - These new entities are almost completely identical to the old ones.\n"
-        " - It is recommended to only use these entities."
+    messagebox.showinfo("Entity Conversion Help",
+        "This option lets you change the light entities:\n\n"
+        "• Leave Entities the way they are:\n"
+        "  No changes to classname.\n\n"
+        "• Convert to RT:\n"
+        "  Converts 'light' to 'light_rt' and 'light_spot' to 'light_rt_spot'.\n"
+        "  Adds recommended _rt_* parameters.\n\n"
+        "• Convert from RT:\n"
+        "  Converts 'light_rt' back to 'light' and 'light_rt_spot' to 'light_spot'."
     )
 
 root = tk.Tk()
@@ -263,7 +284,7 @@ file_var = tk.StringVar()
 mode_var = tk.StringVar()
 backup_var = tk.BooleanVar()
 backup_entry_var = tk.StringVar()
-convert_var = tk.BooleanVar(value=False)
+convert_var = tk.IntVar(value=0)
 batch_dir_var = tk.StringVar()
 
 title_label = tk.Label(root, text="CLUSTERIFIER", font=("Helvetica", 22, "bold"), cursor="hand2")
@@ -307,10 +328,15 @@ help_button.grid(row=0, column=2, padx=(5, 0))
 
 convert_frame = tk.Frame(root)
 convert_frame.pack()
-convert_check = tk.Checkbutton(convert_frame, text="Convert lights to light_rt/light_rt_spot", variable=convert_var, state="disabled")
-convert_check.grid(row=0, column=0)
+tk.Label(convert_frame, text="Entity Conversion:").grid(row=0, column=0, sticky="w")
+convert_radio1 = tk.Radiobutton(convert_frame, text="Leave Entities the way they are", variable=convert_var, value=0, state="disabled")
+convert_radio2 = tk.Radiobutton(convert_frame, text="Convert to RT", variable=convert_var, value=1, state="disabled")
+convert_radio3 = tk.Radiobutton(convert_frame, text="Convert from RT", variable=convert_var, value=2, state="disabled")
+convert_radio1.grid(row=1, column=0, sticky="w")
+convert_radio2.grid(row=2, column=0, sticky="w")
+convert_radio3.grid(row=3, column=0, sticky="w")
 convert_help_btn = tk.Button(convert_frame, text="?", width=2, command=show_convert_help)
-convert_help_btn.grid(row=0, column=1, padx=(5, 0))
+convert_help_btn.grid(row=1, column=1, rowspan=3, padx=(10, 0), sticky="n")
 
 backup_frame = tk.Frame(root)
 backup_frame.pack(pady=10)
