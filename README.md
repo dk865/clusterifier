@@ -1,6 +1,6 @@
 # CLUSTERIFIER
+> Made with ❤️ by dk865 - **Latest *Semi*-Stable Release: [1.4.0](https://github.com/dk865/clusterifier/releases/tag/v1.4.0)**
 
->**Latest *Semi*-Stable Release: [1.4.0](https://github.com/dk865/clusterifier/releases/tag/v1.4.0)**
 
 ## Features:
 ### Single File Mode
@@ -25,4 +25,4 @@
 >[!WARNING]
 >If you manually tweaked your map in a text editor, this can corrupt it (in semi-rare cases). Please make a backup!
 
-> Made with <3 by dk865
+
